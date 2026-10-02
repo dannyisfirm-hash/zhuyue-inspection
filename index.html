@@ -1,0 +1,105 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>悅讀大城-築玥｜自驗檢查表</title>
+<style>
+:root{--ink:#17202a;--muted:#68737d;--line:#dfe5ea;--bg:#f4f7f8;--card:#fff;--accent:#1f6f5b;--ok:#176247;--bad:#9f3434}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.55}
+header{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.top{max-width:1200px;margin:auto;padding:14px 20px;display:flex;gap:16px;align-items:center;justify-content:space-between}
+h1{font-size:20px;margin:0}.sub{font-size:12px;color:var(--muted)}.actions{display:flex;gap:8px;flex-wrap:wrap}
+button{border:1px solid var(--line);background:#fff;color:var(--ink);padding:9px 13px;border-radius:9px;cursor:pointer;font-weight:650}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}button.danger{color:var(--bad)}
+main{max-width:1200px;margin:22px auto;padding:0 20px 50px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px;box-shadow:0 5px 20px rgba(25,40,50,.04)}
+.grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:12px}label{font-size:12px;color:var(--muted);font-weight:700;display:block}
+input,textarea{width:100%;margin-top:5px;border:1px solid var(--line);border-radius:9px;padding:10px;font:inherit;background:#fff}textarea{min-height:90px;resize:vertical}
+.progressbar{height:9px;background:#e9eef0;border-radius:99px;overflow:hidden;margin:9px 0}.fill{height:100%;width:0;background:var(--accent);transition:.2s}
+.stats{display:flex;gap:8px;flex-wrap:wrap;font-size:13px}.pill{padding:5px 9px;border-radius:999px;background:#eef2f3}.pill.ok{color:var(--ok);background:#e7f5ef}.pill.bad{color:var(--bad);background:#fae9e9}
+.toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}select{padding:9px;border:1px solid var(--line);border-radius:9px;background:#fff}
+.section{margin-bottom:16px}.section-head{background:#f7faf9;padding:11px 14px;border-bottom:1px solid var(--line);font-weight:800}.table{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.row{display:grid;grid-template-columns:42px minmax(0,1fr) 190px 250px;gap:0;border-top:1px solid var(--line);align-items:stretch}.row:first-child{border-top:0}
+.row>div{padding:10px 12px}.num{color:var(--muted);text-align:center;background:#fafbfb}.question{font-size:14px}.status{display:flex;gap:5px;align-items:center}
+.status button{padding:7px 9px;min-width:34px;font-size:13px}.status button.sel-ok{background:#e7f5ef;border-color:#9bd3bd;color:var(--ok)}
+.status button.sel-bad{background:#fae9e9;border-color:#e5a5a5;color:var(--bad)}.status button.sel-na{background:#edf0f2;border-color:#bcc5ca;color:#48545b}
+.note{margin:0}footer{color:var(--muted);font-size:12px;text-align:center;padding:12px}
+@media(max-width:800px){.grid{grid-template-columns:1fr 1fr}.row{grid-template-columns:34px 1fr}.row>div{padding:8px}.status,.note{grid-column:2}.status{border-top:1px dashed var(--line)}.note{padding-top:0!important}.top{align-items:flex-start;flex-direction:column}main{padding:0 10px 40px}}
+@media print{body{background:#fff}header{position:static}.actions,.toolbar,.status button,.progressbar,.stats{display:none!important}main{max-width:none;margin:0;padding:0}.card{box-shadow:none;border:1px solid #aaa;break-inside:avoid}.row{grid-template-columns:35px minmax(0,1fr) 90px 180px;font-size:10px}input,textarea{border:0;padding:2px}.section{break-inside:avoid}}
+</style></head><body>
+<header><div class="top"><div><h1>大城營建機構｜自驗檢查表</h1><div class="sub">悅讀大城－築玥　・　單頁式驗屋檢查</div></div>
+<div class="actions"><button onclick="window.print()">列印／另存 PDF</button><button class="primary" onclick="save()">儲存進度</button><button class="primary" onclick="submitToBackend()">送出後台</button><button onclick="testApi()">測試 API</button><button class="danger" onclick="resetAll()">清除全部</button></div></div></header>
+<main>
+<section class="card"><div class="grid">
+<label>建案名稱<input id="project" value="悅讀大城-築玥"></label><label>戶別<input id="unit" placeholder="例如：12A"></label>
+<label>檢查日期<input id="date" type="date"></label><label>時間<input id="time" placeholder="例如：09:00 ~ 11:30"></label></div>
+<div style="margin-top:16px"><div class="toolbar"><strong>檢查進度</strong><span id="percent">0%</span></div><div class="progressbar"><div class="fill" id="fill"></div></div>
+<div class="stats"><span class="pill" id="count">0 / 87</span><span class="pill ok" id="ok">合格 0</span><span class="pill bad" id="bad">不合格 0</span><span class="pill" id="na">無此項 0</span></div></div></section>
+<section class="card"><div class="toolbar"><strong>檢查結果：合格打 O，不合格打 X，無此項打 /</strong>
+<select id="filter" onchange="render()"><option value="all">顯示全部</option><option value="pending">只看未檢查</option><option value="X">只看不合格</option><option value="O">只看合格</option><option value="/">只看無此項</option></select></div></section>
+<div id="sections"></div>
+<section class="card"><h3 style="margin-top:0">其他缺失補充說明</h3><p class="sub">前表未列舉事項；現場拍照之文字說明請臚列於此，以利缺失統計作業。</p>
+<textarea id="other" placeholder="請輸入其他缺失、照片編號、位置或處理說明…"></textarea></section>
+<section class="card"><h3 style="margin-top:0">驗屋人員</h3><input id="inspector" placeholder="請輸入姓名／簽名">
+<p class="sub">註：本檢驗報告僅就當天表面狀況，以非破壞性方式檢測之。本案各戶紗窗、馬桶蓋、蓮蓬頭及電動曬衣架基於設備保管考量暫未安裝，將於客戶驗屋前完成，故暫不列為缺失。</p></section>
+<footer>資料會儲存在本瀏覽器；可用「列印／另存 PDF」留存。 <span id="backendStatus"></span></footer></main>
+<script>
+const DATA=[{"section": "泥作裝修門窗｜天花板", "question": "梁是否有結構裂縫？", "id": "i1"}, {"section": "泥作裝修門窗｜天花板", "question": "粉刷是否平整？", "id": "i2"}, {"section": "泥作裝修門窗｜天花板", "question": "是否有污漬/漏水痕跡？", "id": "i3"}, {"section": "泥作裝修門窗｜天花板", "question": "有無龜裂的情形？", "id": "i4"}, {"section": "泥作裝修門窗｜天花板", "question": "浴室天花板縫隙批土是否平整？", "id": "i5"}, {"section": "泥作裝修門窗｜天花板", "question": "是否有廢料未拆除(鐵釘等)", "id": "i6"}, {"section": "泥作裝修門窗｜牆面", "question": "柱是否有結構裂縫？", "id": "i7"}, {"section": "泥作裝修門窗｜牆面", "question": "粉刷是否平整？", "id": "i8"}, {"section": "泥作裝修門窗｜牆面", "question": "油漆顏色是否均勻？", "id": "i9"}, {"section": "泥作裝修門窗｜牆面", "question": "是否有發霉/污漬/漏水痕跡？", "id": "i10"}, {"section": "泥作裝修門窗｜牆面", "question": "有無龜裂的情形？", "id": "i11"}, {"section": "泥作裝修門窗｜牆面", "question": "開關插座等電氣蓋板旁，是否有破口情形？", "id": "i12"}, {"section": "泥作裝修門窗｜牆面", "question": "是否有廢料未拆除(鐵釘等)", "id": "i13"}, {"section": "泥作裝修門窗｜地坪", "question": "地面施工是否水平平整？", "id": "i14"}, {"section": "泥作裝修門窗｜地坪", "question": "浴廁地板是否洩水良好？(放水時請留意廁所木門不要碰水)", "id": "i15"}, {"section": "泥作裝修門窗｜地坪", "question": "地面是否有污漬？(檳榔汁等)", "id": "i16"}, {"section": "泥作裝修門窗｜木地板", "question": "木地板是否平整、踩踏無聲響？(請加以踩踏測試)", "id": "i17"}, {"section": "泥作裝修門窗｜木地板", "question": "木地板是否有刮痕或污損？", "id": "i18"}, {"section": "泥作裝修門窗｜木地板", "question": "木地板與牆面之間矽利康是否平整或分離？", "id": "i19"}, {"section": "泥作裝修門窗｜門", "question": "門鎖是否使用順暢？", "id": "i20"}, {"section": "泥作裝修門窗｜門", "question": "門扇關閉是否密合、無卡住情形？", "id": "i21"}, {"section": "泥作裝修門窗｜門", "question": "門片門框有無凹損或是烤漆脫落、五金是否鏽蝕？", "id": "i22"}, {"section": "泥作裝修門窗｜門", "question": "大門、臥室「門止」是否完好無損？", "id": "i23"}, {"section": "泥作裝修門窗｜門", "question": "門扇與地板間的縫隙是否過大/過小", "id": "i24"}, {"section": "泥作裝修門窗｜門", "question": "大門外門口機外觀是否污損？", "id": "i25"}, {"section": "泥作裝修門窗｜窗", "question": "是否可緊密閉合？上鎖不致鬆動？", "id": "i26"}, {"section": "泥作裝修門窗｜窗", "question": "窗扇推拉時是否順暢？", "id": "i27"}, {"section": "泥作裝修門窗｜窗", "question": "窗框及玻璃表面，是否有污漬、刮痕或破裂？", "id": "i28"}, {"section": "泥作裝修門窗｜窗", "question": "接縫平整，無包裝紙殘留及空隙", "id": "i29"}, {"section": "泥作裝修門窗｜窗", "question": "窗外確實施打矽利康", "id": "i30"}, {"section": "水電檢查｜電力/插座/開關切", "question": "面板是否平整、有無污損？開關是否順暢？", "id": "i31"}, {"section": "水電檢查｜電力/插座/開關切", "question": "電燈照明是否正常？", "id": "i32"}, {"section": "水電檢查｜設備", "question": "客廳上方「全熱交換機」運轉是否正常？", "id": "i33"}, {"section": "水電檢查｜弱電箱，開關箱｜箱體", "question": "箱體面板是否平整無刮痕？是否歪斜？四周粉刷完整？", "id": "i34"}, {"section": "水電檢查｜弱電箱，開關箱｜箱體", "question": "開啟及關閉是否順暢？", "id": "i35"}, {"section": "水電檢查｜弱電箱，開關箱｜箱體", "question": "線材佈線是否整齊？內部有無髒污？", "id": "i36"}, {"section": "前陽台/工作陽台｜水龍頭", "question": "水龍頭出水量是否正常？", "id": "i37"}, {"section": "前陽台/工作陽台｜排水孔", "question": "地板排水功能是否順暢?", "id": "i38"}, {"section": "前陽台/工作陽台｜地坪", "question": "地板是否洩水良好？", "id": "i39"}, {"section": "前陽台/工作陽台｜牆/地面", "question": "磁磚是否污損？填縫是否完整？", "id": "i40"}, {"section": "廚房設備｜櫥櫃", "question": "上櫥櫃與梁的間隙是否水平？(有無明顯歪斜)", "id": "i41"}, {"section": "廚房設備｜櫥櫃", "question": "門扇、層板安裝是否穩固？閉合是否正常？(進口廚具下櫃無背板)", "id": "i42"}, {"section": "廚房設備｜櫥櫃", "question": "櫥櫃內是否發霉？", "id": "i43"}, {"section": "廚房設備｜櫥櫃", "question": "抽屜、拉籃抽拉時是否滑順？", "id": "i44"}, {"section": "廚房設備｜櫥櫃", "question": "櫥櫃感應燈開關是否正常？", "id": "i45"}, {"section": "廚房設備｜櫥櫃", "question": "踢腳板是否安裝及平整？", "id": "i46"}, {"section": "廚房設備｜櫥櫃", "question": "是否無雜物？", "id": "i47"}, {"section": "廚房設備｜流理檯", "question": "檢查人造石檯面表面是否有刮痕及撞傷？", "id": "i48"}, {"section": "廚房設備｜流理檯", "question": "檯面與水槽縫隙封邊是否完善？", "id": "i49"}, {"section": "廚房設備｜流理檯", "question": "止水塞是否密合？", "id": "i50"}, {"section": "廚房設備｜流理檯", "question": "水可以從溢水口排出？", "id": "i51"}, {"section": "廚房設備｜流理檯", "question": "檢視排水管附近是否有漏水的情況？", "id": "i52"}, {"section": "廚房設備｜流理檯", "question": "止水塞拔除後，排水是否順暢？", "id": "i53"}, {"section": "廚房設備｜排油煙機", "question": "啟動後各項功能是否正常？", "id": "i54"}, {"section": "廚房設備｜排油煙機", "question": "啟動後上廚櫃內排煙軟管是否漏風？", "id": "i55"}, {"section": "廚房設備｜排油煙機", "question": "油煙管及油煙罩是否安裝完整？", "id": "i56"}, {"section": "廚房設備｜排油煙機", "question": "滴油杯，濾油網，遮煙罩是否安裝齊全？", "id": "i57"}, {"section": "廚房設備｜其他廚具", "question": "有無瀝水籃(一大一小)、刀架、五連勾？", "id": "i58"}, {"section": "廚房設備｜其他廚具", "question": "側拉籃抽拉時是否滑順？", "id": "i59"}, {"section": "廚房設備｜其他廚具", "question": "電器櫃安裝是否穩固？門板閉合及拍拍手按壓開關是否正常？ (2A．2C．2D．4B．5B．9C．10D．13B．13D．15A．15C．16B．14C)", "id": "i60"}, {"section": "廚房設備｜其他廚具", "question": "電器櫃設備：外觀是否有凹損？配件烤盤(自動旋轉烤叉、烤架)是否齊全？(盒裝，免拆封)", "id": "i61"}, {"section": "衛浴設備｜洗臉盆", "question": "止水塞是否密合？", "id": "i62"}, {"section": "衛浴設備｜洗臉盆", "question": "水可以從溢水口排出？", "id": "i63"}, {"section": "衛浴設備｜洗臉盆", "question": "檢視排水管附近是否有漏水的情況？", "id": "i64"}, {"section": "衛浴設備｜洗臉盆", "question": "止水塞拔除後，排水是否順暢？", "id": "i65"}, {"section": "衛浴設備｜洗臉盆", "question": "洗臉盆是否有裂縫、刮傷？", "id": "i66"}, {"section": "衛浴設備｜洗臉盆", "question": "水龍頭是否有刮傷、鏽蝕等情形？", "id": "i67"}, {"section": "衛浴設備｜洗臉盆", "question": "水龍頭的轉動是否順暢？", "id": "i68"}, {"section": "衛浴設備｜洗臉盆", "question": "洗手檯石材檯面是否刮傷或裂痕?(請手摸檢查)", "id": "i69"}, {"section": "衛浴設備｜鏡面", "question": "鏡面是否安裝穩固？有無刮傷、破裂？", "id": "i70"}, {"section": "衛浴設備｜浴櫃", "question": "浴櫃是否安裝穩固？閉合是否正常？", "id": "i71"}, {"section": "衛浴設備｜浴櫃", "question": "門片有無凹損、刮傷或五金是否鏽蝕？", "id": "i72"}, {"section": "衛浴設備｜馬桶", "question": "表面有無刮痕、破損、裂痕？", "id": "i73"}, {"section": "衛浴設備｜馬桶", "question": "檢查沖水量及排水情形是否正常？", "id": "i74"}, {"section": "衛浴設備｜馬桶", "question": "檢查馬桶周邊有無漏水？", "id": "i75"}, {"section": "衛浴設備｜馬桶", "question": "檢查馬桶底部矽利康是否平整？", "id": "i76"}, {"section": "衛浴設備｜淋浴間", "question": "水龍頭是否有刮傷、鏽蝕等情形？", "id": "i77"}, {"section": "衛浴設備｜淋浴間", "question": "水龍頭的轉動是否順暢？", "id": "i78"}, {"section": "衛浴設備｜淋浴間", "question": "淋浴隔間膠條是否安裝？密合度是否良好？", "id": "i79"}, {"section": "衛浴設備｜淋浴間", "question": "淋浴門的開關是否正常？", "id": "i80"}, {"section": "衛浴設備｜浴缸", "question": "止水塞是否密合？拔除後排水是否順暢？(17A)", "id": "i81"}, {"section": "衛浴設備｜浴缸", "question": "水可以從溢水口排出？", "id": "i82"}, {"section": "衛浴設備｜浴缸", "question": "檢查矽利康收邊是否完整？", "id": "i83"}, {"section": "衛浴設備｜浴缸", "question": "三件式龍頭、切換器是否正常？", "id": "i84"}, {"section": "衛浴設備｜配件", "question": "次浴排風扇是否正常運作(開關同電燈)？", "id": "i85"}, {"section": "衛浴設備｜配件", "question": "毛巾架、淋浴升降桿安裝是否穩固？", "id": "i86"}, {"section": "衛浴設備｜配件", "question": "毛巾架、淋浴升降桿是否刮痕、生鏽？", "id": "i87"}];const state={};DATA.forEach(x=>state[x.id]={status:"",note:""});
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function render(){const root=document.getElementById("sections"),filter=document.getElementById("filter").value;root.innerHTML="";const groups={};
+DATA.forEach(x=>(groups[x.section]??=[]).push(x));Object.entries(groups).forEach(([section,items])=>{const visible=items.filter(x=>filter==="all"||(filter==="pending"?!state[x.id].status:state[x.id].status===filter));if(!visible.length)return;
+const wrap=document.createElement("section");wrap.className="card section";const h=document.createElement("div");h.className="section-head";h.textContent=section;wrap.appendChild(h);const table=document.createElement("div");table.className="table";
+visible.forEach(x=>{const s=state[x.id],num=DATA.findIndex(y=>y.id===x.id)+1,row=document.createElement("div");row.className="row";
+row.innerHTML='<div class="num">'+num+'</div><div class="question">'+esc(x.question)+'</div><div class="status">'+
+'<button class="'+(s.status==="O"?"sel-ok":"")+'" onclick="setStatus(\''+x.id+'\',\'O\')">O 合格</button>'+
+'<button class="'+(s.status==="X"?"sel-bad":"")+'" onclick="setStatus(\''+x.id+'\',\'X\')">X 缺失</button>'+
+'<button class="'+(s.status==="/"?"sel-na":"")+'" onclick="setStatus(\''+x.id+'\',\'/\')">/ 無此項</button></div>'+
+'<div class="note"><input value="'+esc(s.note)+'" placeholder="補充說明／位置…" oninput="state[\''+x.id+'\'].note=this.value;update()"></div>';
+table.appendChild(row)});wrap.appendChild(table);root.appendChild(wrap)});update(false)}
+function setStatus(id,v){state[id].status=state[id].status===v?"":v;render()}
+function update(saveIt=true){let o=0,x=0,na=0,done=0;DATA.forEach(i=>{const s=state[i.id];if(s.status==="O")o++;if(s.status==="X")x++;if(s.status==="/")na++;if(s.status)done++});
+const pct=Math.round(done/DATA.length*100);document.getElementById("percent").textContent=pct+"%";document.getElementById("fill").style.width=pct+"%";
+document.getElementById("count").textContent=done+" / "+DATA.length;document.getElementById("ok").textContent="合格 "+o;document.getElementById("bad").textContent="不合格 "+x;document.getElementById("na").textContent="無此項 "+na;if(saveIt)persist()}
+function val(id){return document.getElementById(id).value}
+function persist(){localStorage.setItem("dacheng-checklist",JSON.stringify({state,project:val("project"),unit:val("unit"),date:val("date"),time:val("time"),other:val("other"),inspector:val("inspector")}))}
+function save(){persist();alert("已儲存到本瀏覽器。")}
+function load(){const raw=localStorage.getItem("dacheng-checklist");if(!raw)return;try{const d=JSON.parse(raw);Object.assign(state,d.state||{});["project","unit","date","time","other","inspector"].forEach(k=>{if(d[k]!=null)document.getElementById(k).value=d[k]})}catch(e){}}
+function resetAll(){if(!confirm("確定要清除所有檢查結果與資料嗎？"))return;localStorage.removeItem("dacheng-checklist");DATA.forEach(x=>state[x.id]={status:"",note:""});document.getElementById("unit").value="";document.getElementById("date").value="";document.getElementById("time").value="";document.getElementById("other").value="";document.getElementById("inspector").value="";render()}
+
+const API_URL = "https://script.google.com/macros/s/AKfycbwaDMKDy0CWGWe93pT_8xK6ZoyWu7hwaOjI4CHrw_VFUbb2z3rAmPXKH1nrdwSp1JLH/exec";
+function makeSubmissionId(){return "INS-"+new Date().toISOString().replace(/[-:.TZ]/g,"").slice(0,14)+"-"+Math.random().toString(36).slice(2,8).toUpperCase()}
+function buildPayload(){const items={};DATA.forEach(i=>items[i.id]={question:i.question,section:i.section,status:state[i.id].status||"",note:state[i.id].note||""});return{submissionId:makeSubmissionId(),project:val("project"),unit:val("unit"),date:val("date"),time:val("time"),inspector:val("inspector"),other:val("other"),submittedAt:new Date().toISOString(),items}}
+function submitToBackend(){
+ if(!API_URL||API_URL.includes("請貼上")){alert("尚未設定後台 API。");return}
+ const unanswered=DATA.filter(i=>!state[i.id].status).length;
+ if(unanswered&&!confirm(`目前還有 ${unanswered} 項未檢查，確定要送出嗎？`))return;
+
+ const payload=buildPayload();
+ localStorage.setItem("dacheng-last-submission",JSON.stringify({submissionId:payload.submissionId,submittedAt:payload.submittedAt}));
+
+ // 使用隱藏 form 直接 POST 到 Apps Script，避免 Mac 本機 file:// 的 fetch/CORS 限制
+ const iframeName="gas_submit_target";
+ let iframe=document.getElementById(iframeName);
+ if(!iframe){
+   iframe=document.createElement("iframe");
+   iframe.id=iframeName; iframe.name=iframeName; iframe.style.display="none";
+   document.body.appendChild(iframe);
+ }
+ const form=document.createElement("form");
+ form.method="POST";
+ form.action=API_URL;
+ form.target=iframeName;
+ form.style.display="none";
+ const input=document.createElement("input");
+ input.type="hidden"; input.name="payload"; input.value=JSON.stringify(payload);
+ form.appendChild(input);
+ document.body.appendChild(form);
+ form.submit();
+ form.remove();
+
+ const el=document.getElementById("backendStatus");
+ el.textContent=" 已送出，請至 Google 試算表確認";
+ alert("資料已送往後台。請回 Google 試算表重新整理確認。");
+}
+
+function testApi(){
+ window.open(API_URL,"_blank");
+}
+["project","unit","date","time","other","inspector"].forEach(id=>document.getElementById(id).addEventListener("input",()=>update()));load();render();
+</script></body></html>
