@@ -73,29 +73,28 @@ function submitToBackend(){
  const payload=buildPayload();
  localStorage.setItem("dacheng-last-submission",JSON.stringify({submissionId:payload.submissionId,submittedAt:payload.submittedAt}));
 
- // 使用隱藏 form 直接 POST 到 Apps Script，避免 Mac 本機 file:// 的 fetch/CORS 限制
- const iframeName="gas_submit_target";
- let iframe=document.getElementById(iframeName);
- if(!iframe){
-   iframe=document.createElement("iframe");
-   iframe.id=iframeName; iframe.name=iframeName; iframe.style.display="none";
-   document.body.appendChild(iframe);
- }
+ // v3.1.1：改用使用者點擊事件直接開啟 POST 結果頁。
+ // 不再依賴 hidden iframe，提升 iPhone / Safari 的相容性。
  const form=document.createElement("form");
  form.method="POST";
  form.action=API_URL;
- form.target=iframeName;
+ form.target="_blank";
  form.style.display="none";
+
  const input=document.createElement("input");
- input.type="hidden"; input.name="payload"; input.value=JSON.stringify(payload);
+ input.type="hidden";
+ input.name="payload";
+ input.value=JSON.stringify(payload);
+
  form.appendChild(input);
  document.body.appendChild(form);
  form.submit();
- form.remove();
+
+ setTimeout(()=>form.remove(),1000);
 
  const el=document.getElementById("backendStatus");
- el.textContent=" 已送出，請至 Google 試算表確認";
- alert("資料已送往後台。請回 Google 試算表重新整理確認。");
+ el.textContent=" 已送出；手機會開啟 Google 回應頁，看到 ok:true 即代表後台已收到";
+ alert("已送出後台。手機若開啟 Google 回應頁並看到 ok:true，即代表 Spreadsheet 已收到資料；可直接關閉該頁回到驗屋表。");
 }
 
 function testApi(){
